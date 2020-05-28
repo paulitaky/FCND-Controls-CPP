@@ -204,7 +204,23 @@ float QuadControl::AltitudeControl(float posZCmd, float velZCmd, float posZ, flo
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
 
+  float pos_diff = kpPosZ * (posZCmd - posZ);
+  float vel_diff = kpVelZ * (velZCmd - velZ);
+  integratedAltitudeError += (posZCmd - posZ) * dt;
 
+  float u_bar_1 = pos_diff + vel_diff + (KiPosZ * integratedAltitudeError) + accelZCmd;
+  float vertical_accel = (u_bar_1 - 9.81f) / R(2,2);
+
+  // Limit ascent and descent rate
+  if (vertical_accel > (maxDescentRate / dt)) {
+      // descent mode
+      vertical_accel = maxDescentRate / dt;
+  } else if (vertical_accel < (-maxAscentRate / dt)) {
+      // ascent mode
+      vertical_accel = -maxAscentRate / dt;
+  }
+
+  thrust = -mass * vertical_accel;
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
   
@@ -242,7 +258,29 @@ V3F QuadControl::LateralPositionControl(V3F posCmd, V3F velCmd, V3F pos, V3F vel
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
 
-  
+  V3F pos_diff;
+  pos_diff[0] = kpPosXY * (posCmd[0] - pos[0]);
+  pos_diff[1] = kpPosXY * (posCmd[1] - pos[1]);
+
+  // limit horizontal velocity
+  float velCmd_norm = pow(pow(velCmd[0], 2) + pow(velCmd[1], 2), 0.5);
+  if (velCmd_norm > maxSpeedXY) {
+      velCmd[0] = (velCmd[0] * maxSpeedXY) / velCmd_norm;
+      velCmd[1] = (velCmd[1] * maxSpeedXY) / velCmd_norm;
+  }
+
+  V3F vel_diff;
+  vel_diff[0] = kpVelXY * (velCmd[0] - vel[0]);
+  vel_diff[1] = kpVelXY * (velCmd[1] - vel[1]);
+
+  accelCmd += pos_diff + vel_diff;
+
+  // limit horizontal acceleration
+  float accelCmd_norm = pow(pow(accelCmd[0], 2) + pow(accelCmd[1], 2), 0.5);
+  if (accelCmd_norm > maxAccelXY) {
+      accelCmd[0] = (accelCmd[0] * maxAccelXY) / accelCmd_norm;
+      accelCmd[1] = (accelCmd[1] * maxAccelXY) / accelCmd_norm;
+  }
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
