@@ -70,10 +70,21 @@ VehicleCommand QuadControl::GenerateMotorCommands(float collThrustCmd, V3F momen
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
 
-  cmd.desiredThrustsN[0] = mass * 9.81f / 4.f; // front left
-  cmd.desiredThrustsN[1] = mass * 9.81f / 4.f; // front right
-  cmd.desiredThrustsN[2] = mass * 9.81f / 4.f; // rear left
-  cmd.desiredThrustsN[3] = mass * 9.81f / 4.f; // rear right
+  // linear equation system setup with tau_x, tau_y, tau_z, dependent on F_i with 
+  // i = 1,...,4, L, kappa = k_m/k_f, and c = F_1 + ..., 
+  // solved after F_i with i = 1,..,4 with linear equation solver
+  float l = L / pow(2.f, 0.5);
+  float c = collThrustCmd;
+  float f_1 = (c * kappa * l + kappa * (momentCmd.x + momentCmd.y) - l * momentCmd.z) / (4.0 * kappa * l);
+  float f_2 = (c * kappa * l - kappa * (momentCmd.x - momentCmd.y) + l * momentCmd.z) / (4.0 * kappa * l);
+  float f_3 = (c * kappa * l - kappa * (momentCmd.x + momentCmd.y) - l * momentCmd.z) / (4.0 * kappa * l);
+  float f_4 = (c * kappa * l + kappa * (momentCmd.x - momentCmd.y) + l * momentCmd.z) / (4.0 * kappa * l);
+
+  // thrust 3 and 4 have to be switched due to rotor setup
+  cmd.desiredThrustsN[0] = f_1; // front left
+  cmd.desiredThrustsN[1] = f_2; // front right
+  cmd.desiredThrustsN[2] = f_4; // rear left
+  cmd.desiredThrustsN[3] = f_3; // rear right
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
@@ -98,7 +109,10 @@ V3F QuadControl::BodyRateControl(V3F pqrCmd, V3F pqr)
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
 
-  
+  V3F rate_error = pqrCmd - pqr;
+  V3F mom_iner(Ixx, Iyy, Izz);
+
+  momentCmd = mom_iner * kpPQR * rate_error;
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
