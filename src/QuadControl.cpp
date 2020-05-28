@@ -303,6 +303,18 @@ float QuadControl::YawControl(float yawCmd, float yaw)
   float yawRateCmd=0;
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
 
+  // limit commanded yaw to range from 0 to 2*pi
+  float yawCmd_lim = fmodf(yawCmd, 2.0*M_PI);
+
+  float yaw_error = yawCmd_lim - yaw;
+
+  if (yaw_error > M_PI) {
+      yaw_error = yaw_error - 2.0 * M_PI;
+  } else if (yaw_error < -M_PI) {
+      yaw_error = yaw_error + 2.0 * M_PI;
+  }
+
+  yawRateCmd = kpYaw * yaw_error;
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
