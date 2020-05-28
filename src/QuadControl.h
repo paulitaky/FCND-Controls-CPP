@@ -17,6 +17,8 @@ public:
 
   virtual VehicleCommand RunControl(float dt, float sim_time);
 
+  float ClipTilt(float x);
+
   VehicleCommand GenerateMotorCommands(float collThrustCmd, V3F momentCmd);
 
   // returns desired yaw rate
